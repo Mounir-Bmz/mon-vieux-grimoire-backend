@@ -10,14 +10,19 @@ exports.getOneBook = (req, res) => {
 };
 
 exports.createBook = (req, res) => {
+  console.log('Req body:', req.body);
+  console.log('Req file:', req.file);
   const bookObject = JSON.parse(req.body.book);
   delete bookObject._id;
+  delete bookObject._userId;
   const book = new Book({
     ...bookObject,
     userId: req.auth.userId,
-    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    imageUrl: req.file ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}` : ''
   });
-  book.save().then(() => res.status(201).json({ message: 'Livre créé !' })).catch(error => res.status(400).json({ error }));
+  book.save()
+    .then(() => res.status(201).json({ message: 'Livre créé !' }))
+    .catch(error => { console.log('Erreur save:', error); res.status(400).json({ error }); });
 };
 
 exports.modifyBook = (req, res) => {
