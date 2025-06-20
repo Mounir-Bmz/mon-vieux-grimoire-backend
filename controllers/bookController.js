@@ -43,3 +43,23 @@ exports.deleteBook = (req, res) => {
     });
   }).catch(error => res.status(500).json({ error }));
 };
+
+exports.createRating = (req, res) => {
+  const { userId, rating } = req.body;
+  if (rating < 0 || rating > 5) return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+
+  Book.findOne({ _id: req.params.id })
+    .then(book => {
+      if (!book) return res.status(404).json({ error: 'Book not found' });
+      if (book.ratings.find(r => r.userId === userId)) return res.status(400).json({ error: 'User already rated this book' });
+
+      book.ratings.push({ userId, grade: rating });
+      const ratingSum = book.ratings.reduce((sum, r) => sum + r.grade, 0);
+      book.averageRating = Number((ratingSum / book.ratings.length).toFixed(2));
+
+      book.save()
+        .then(() => res.status(200).json(book))
+        .catch(error => res.status(500).json({ error }));
+    })
+    .catch(error => res.status(500).json({ error }));
+};
